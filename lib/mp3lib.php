@@ -14,6 +14,7 @@ require(dirname(__FILE__).'/Library.php');
 require(dirname(__FILE__).'/Artist.php');
 require(dirname(__FILE__).'/Album.php');
 require(dirname(__FILE__).'/Song.php');
+require(dirname(__FILE__).'/Image.php');
 
 //---------------
 // Devrait aller ailleurs mais depend de mp3lib

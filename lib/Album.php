@@ -121,11 +121,11 @@ if (!$this->has_cover())
 			//DBG/PHO_Display::trace($song->fname.': song has cover');
 			try
 				{
-				$img=mk_image($song->cover_data);
-				if (normalize_image($img))
+				$img=Image::mk_image($song->cover_data);
+				if (Image::normalize($img))
 					{
 					PHO_Display::debug($this->relpath().': Normalizing album cover image');
-					image_to_jpeg($img,$this->cover_data,$this->cover_mime);
+					Image::image_to_jpeg($img,$this->cover_data,$this->cover_mime);
 					}
 				else
 					{
@@ -184,7 +184,7 @@ foreach ($files as $entry)
 		{
 		$songs[]=array($rdir,$entry);
 		}
-	elseif (is_image_suffix($ext))
+	elseif (Image::is_image_suffix($ext))
 		{
 		$images[]=$rpath;
 		}
@@ -216,12 +216,12 @@ return (!is_null($this->cover_data));
 private function get_cover_from_file($path)
 {
 try {
-	$img=mk_image_from_file($path);
-	if (normalize_image($img))
+	$img=Image::mk_image_from_file($path);
+	if (Image::normalize($img))
 		{
 		PHO_Display::debug($path.': Normalizing album cover image');
 		}
-	image_to_jpeg($img,$this->cover_data,$this->cover_mime);
+	Image::image_to_jpeg($img,$this->cover_data,$this->cover_mime);
 	unset($img);
 	}
 catch (Exception $e)

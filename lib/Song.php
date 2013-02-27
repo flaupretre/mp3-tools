@@ -162,14 +162,14 @@ if (isset($info['comments']['picture']))
 		$this->cover_mime=$info['comments']['picture'][0]['image_mime'];
 		// Check if mime type is correct. Sometimes, it is empty (with bmp, for
 		// instance). There, we try to convert the image to jpeg and set the object
-		// as 'modified'. If mk_image() fails, it throws an exception and the song
+		// as 'modified'. If Image::mk_image() fails, it throws an exception and the song
 		// is ignored.
 		if ($this->cover_mime==='')
 			{
 			$this->trace('Image data size: '.strlen($this->cover_data));
 			$this->trace('Converting invalid image type to jpeg');
-			$img=mk_image($this->cover_data);
-			image_to_jpeg($img,$this->cover_data,$this->cover_mime);
+			$img=Image::mk_image($this->cover_data);
+			Image::image_to_jpeg($img,$this->cover_data,$this->cover_mime);
 			$this->set_modified();
 			}
 		}
@@ -576,11 +576,11 @@ else if ((!$this->album_obj->has_cover())&&(!is_null($this->cover_data)))
 	{
 	try
 		{
-		$img=mk_image($this->cover_data);
-		if (normalize_image($img))
+		$img=Image::mk_image($this->cover_data);
+		if (Image::normalize($img))
 			{
 			$this->debug('Normalizing cover image');
-			image_to_jpeg($img,$this->cover_data,$this->cover_mime);
+			Image::image_to_jpeg($img,$this->cover_data,$this->cover_mime);
 			$this->set_modified();
 			}
 		unset($img);
