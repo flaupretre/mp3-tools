@@ -16,6 +16,7 @@ $this->files=array();
 $this->hash_table=array();
 
 $this->get_dir($path);
+//ksort($this->hash_table); // Trie par taille
 }
 
 //----
@@ -31,7 +32,9 @@ private function get_dir($path)
 {
 PHO_Display::trace('Getting dir '.$path);
 
-foreach(PHO_File::scandir($path) as $entry)
+$entries=PHO_File::scandir($path);
+sort($entries);
+foreach($entries as $entry)
 	{
 	$epath=PHO_File::combine_path($path,$entry);
 	switch(filetype($epath))
@@ -96,7 +99,8 @@ public function find_dups()
 {
 $dups=array();
 
-PHO_Display::debug('Entering analyzis: File count = '.count($this->files));
+PHO_Display::trace('Starting analyzis: File count = '
+	.count($this->files).' - Hash table size = '.count($this->hash_table));
 foreach ($this->hash_table as $hash => $files)
 	{
 	if (count($files) < 2) continue;
@@ -119,9 +123,9 @@ return $dups;
 
 //----
 
-public function delete($id)
+public function delete($file)
 {
-$file=$this->files[$id];
+$id=$file->id();
 $file->delete();
 unset($this->files[$id]);
 $key=$file->hash_key();

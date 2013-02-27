@@ -7,7 +7,7 @@ private $path;
 private $crc=null;
 private $crc_offset;
 private $crc_len; // Length of data for CRC
-public $id; // ID dans arbo
+private $id; // ID dans arbo
 
 //----
 
@@ -35,6 +35,13 @@ if (Song::is_a_song($path))
 public function path()
 {
 return $this->path;
+}
+
+//----
+
+public function id()
+{
+return $this->id;
 }
 
 //----
