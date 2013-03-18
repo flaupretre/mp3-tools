@@ -63,17 +63,34 @@ return btrim(preg_replace('/\s+/u',' ',$string));
 
 //-----------------------
 
+function suppress_prefix_suffix(&$string,$prefix)
+{
+$rc1=suppress_prefix($string,$prefix);
+$rc2=suppress_suffix($string,$prefix);
+return ($rc1||$rc2);
+}
+
+//-----------------------
+
 function suppress_prefix(&$string,$prefix)
 {
 $prefix=trim($prefix,BSEPAR);
 if ($prefix=='') return $string;
+$rc=false;
 
-$string=trim($string,BSEPAR);
+while(1)
+	{
+	$string=trim($string,BSEPAR);
+	if (suppress_prefix_2($string,$prefix)
+		|| suppress_prefix_2($string,str_replace(' ','',$prefix)))
+		{
+		$rc=true;
+		continue;
+		}
+	break;
+	}
 
-if (suppress_prefix_2($string,$prefix)) return true;
-if (suppress_prefix_2($string,str_replace(' ','',$prefix))) return true;
-
-return false;
+return $rc;
 }
 
 //-----------------------
@@ -96,6 +113,59 @@ if (strcasecmp(substr($string,0,$plen),$prefix)==0)
 		}
 	}
 return false;
+}
+
+//-----------------------
+
+function suppress_suffix(&$string,$suffix)
+{
+$suffix=trim($suffix,BSEPAR);
+if ($suffix=='') return $string;
+$rc=false;
+
+while(1)
+	{
+	$string=trim($string,BSEPAR);
+	if (suppress_suffix_2($string,$suffix)
+		|| suppress_suffix_2($string,str_replace(' ','',$suffix)))
+		{
+		$rc=true;
+		continue;
+		}
+	break;
+	}
+
+return $rc;
+}
+
+//-----------------------
+
+
+function suppress_suffix_2(&$string,$suffix) // private
+{
+$plen=strlen($suffix);
+if (strcasecmp(substr($string,-$plen),$suffix)==0)
+	{
+	$str2=trim(substr($string,0,-$plen),BLANKS);
+	if (($str2!=='') && (strpos(SEPAR,substr($str2,-1))!==false))
+		{
+		$str2=trim($str2,BSEPAR);
+		if ($str2!=='')
+			{
+			$string=$str2;
+			return true;
+			}
+		}
+	}
+return false;
+}
+
+//-----------------------
+
+function artist_string_is_multi($string)
+{
+if ($string=='') return false;
+return ($string{0}==='-');
 }
 
 //-----------------------
@@ -154,7 +224,8 @@ function get_options()
 {
 $args=PHO_Getopt::readPHPArgv();
 array_shift($args);
-list($options,$args)=PHO_Getopt::getopt($args,'nv',array('verbose','noexec'));
+list($options,$args)=PHO_Getopt::getopt($args,'nvr:f:c'
+	,array('verbose','noexec','max_bitrate','output_file','check_only'));
 
 foreach($options as $option)
 	{
@@ -170,6 +241,22 @@ foreach($options as $option)
 		case '--noexec':
 			$GLOBALS['do_changes']=false;
 			break;
+
+		case 'r':
+		case '--max_bitrate':
+			$GLOBALS['max_bitrate']=intval($arg);
+			break;
+
+		case 'f':
+		case '--output_file':
+			$GLOBALS['output_file']=$arg;
+			break;
+
+		case 'c':
+		case '--check_only':
+			$GLOBALS['check_only']=true;
+			break;
+
 		}
 	}
 $GLOBALS['argv']=$args;

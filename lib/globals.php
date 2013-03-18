@@ -15,6 +15,12 @@ $GLOBALS['do_changes']=true;
 
 $GLOBALS['fname_encoding']=((DIRECTORY_SEPARATOR==='\\') ? 'Windows-1252' : 'UTF-8');
 
+$GLOBALS['max_bitrate']=0; // Option '-r'. Bitrate max en Kbit/s
+
+$GLOBALS['output_file']=null;
+
+$GLOBALS['check_only']=false;
+
 //--------------
 
 date_default_timezone_set('Europe/Paris'); // Mandatory on Windows

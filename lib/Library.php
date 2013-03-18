@@ -3,42 +3,32 @@
 class Library
 {
 
-public $path;
-public $artists;
+private $path;
+private $artists; // Aray of artist names
 
 //------
 
 public function __construct($path)
 {
 $this->path=$path;
-
-//---- Populate
-
-foreach(get_subdirs($path) as $artist)
+foreach(get_subdirs($path) as $name)
 	{
-	$this->artists[$artist]=new Artist(PHO_File::combine_path($this->path(),$artist),$artist);
+	$this->artists[]=$name;
 	}
 }
 
 //------
 
-public function fix()
+public function artists()
 {
-foreach($this->artists as $artist) $artist->fix();
+return $this->artists;
 }
 
 //------
 
-public function check()
+public function artist($name)
 {
-foreach($this->artists as $artist) $artist->check();
-}
-
-//------
-
-public function dump($path)
-{
-file_put_contents($path,serialize($this));
+return new Artist(PHO_File::combine_path($this->path(),$name),$name);
 }
 
 //------

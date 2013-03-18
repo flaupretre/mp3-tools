@@ -51,13 +51,15 @@ return $album;
 
 public function is_multi()
 {
-return ($this->name{0}==='-');
+return artist_string_is_multi($this->name);
 }
 
 //------
 
 public function fix()
 {
+PHO_Display::debug("Fixing artist: ".$this->name);
+
 // Fix albums
 
 foreach($this->albums as $album) $album->fix();
@@ -73,6 +75,16 @@ foreach($this->albums as $album) $album->check();
 }
 
 //------
+
+public function to_spare()
+{
+$res=0;
+foreach($this->albums as $album) $res +=$album->to_spare();
+return $res;
+}
+
+//------
+
 public function path($fname='')
 {
 return PHO_File::combine_path($this->path,$fname);

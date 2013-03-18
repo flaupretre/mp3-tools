@@ -33,12 +33,10 @@ $GLOBALS['tag_translation']=array(
 
 class Song extends PHO_Modifiable
 {
-
 public $dir;	// Relative dir from album path
 public $fname;
 
-public $artist_obj; // backlink
-public $album_obj; // backlink
+private $album_obj; // backlink
 
 public $format;
 public $title;
@@ -48,7 +46,8 @@ public $year;
 public $comment;
 public $genre;
 public $track;
-public $dir_order; // Starts to 1 - Alphabetical rank in album
+public $audio_offset; // Bytes
+public $audio_size; // Bytes
 
 public $other_tags; // Array of additional ID3V2 tags to preserve
 
@@ -61,19 +60,17 @@ public $mcomments;
 
 //------
 
-public static $id3=null;
+private static $id3=null;
 
 //------
 
-public function __construct($album_obj,$dir,$fname,$dir_order)
+public function __construct($album_obj,$dir,$fname)
 {
 PHO_Display::debug("Creating song: ".$fname);
 
 $this->album_obj=$album_obj;
-$this->artist_obj=$album_obj->artist;
 $this->dir=$dir;
 $this->fname=$fname;
-$this->dir_order=$dir_order;
 
 parent::__construct();
 
@@ -88,7 +85,9 @@ if (!array_key_exists('fileformat',$info))
 
 $this->format=$info['fileformat'];
 
-$this->bitrate=$info['bitrate'];
+$this->bitrate=round($info['bitrate']/1000);
+
+list($this->audio_offset,$this->audio_size)=self::audio_data_from_info($info);
 
 $this->other_tags=(isset($info['tags']['id3v2']) ? $info['tags']['id3v2'] : array());
 
@@ -214,24 +213,45 @@ return self::$id3->analyze($path);
 }
 
 //------
+
+private static function audio_data_from_info($info)
+{
+if (is_array($info) && isset($info['avdataend']) && isset($info['avdataoffset']))
+	{
+	$offset=$info['avdataoffset'];
+	$size=$info['avdataend']-$info['avdataoffset'];
+	}
+else
+	{
+	$offset=$size=0;
+	}
+
+return array($offset,$size);
+}
+
+//------
 // Return offset and length of audio data
 
 public static function get_audio_data_info($path)
 {
 $info = self::analyze($path);
+return self::audio_data_from_info($info);
+}
 
-return (is_array($info) && isset($info['avdataend']) && isset($info['avdataoffset']))
-	? array($info['avdataoffset'],$info['avdataend']-$info['avdataoffset'])
-	: false;
+//------
+
+public static function get_info_from_path($path)
+{
+$info = self::analyze($path);
+getid3_lib::CopyTagsToComments($info);
+return $info;
 }
 
 //------
 
 public function get_info()
 {
-$info = self::analyze($this->path());
-getid3_lib::CopyTagsToComments($info);
-return $info;
+return self::get_info_from_path($this->path());
 }
  
 //------
@@ -276,7 +296,7 @@ foreach($GLOBALS['props'] as $prop => $def)
 
 //-- Set track nb to v2 format
 
-$data['track'][0].='/'.$this->album_obj->nb_tracks;
+$data['track'][0].='/'.$this->album_obj->track_count();
 
 //-- Integrate mcomments into the comment tag
 
@@ -438,7 +458,14 @@ return array_key_exists($name,$this->mcomments);
 
 public function fix()
 {
-while ($this->do_fix()) {}
+$rc=false;
+
+while (1)
+	{
+	if (!$this->do_fix()) break;
+	$rc=true;
+	}
+return $rc;
 }
 
 //------
@@ -474,11 +501,11 @@ if (preg_match('/^(\d\d?)\s*[\-_\.]\s*(\S.*)$/u',$fbase,$a))
 	$fbase=btrim($a[2]);
 	}
 
-suppress_prefix($fbase,$this->artist_obj->name);
-suppress_prefix($fbase,$this->artist);
+suppress_prefix_suffix($fbase,$this->album_obj->artist->name);
+suppress_prefix_suffix($fbase,$this->artist);
 
-suppress_prefix($fbase,$this->album_obj->name);
-suppress_prefix($fbase,$this->album);
+suppress_prefix_suffix($fbase,$this->album_obj->name);
+suppress_prefix_suffix($fbase,$this->album);
 
 $a=array();
 if (preg_match('/^(.*\S)\s*\((\d\d\d\d)\)$/u',$fbase,$a))
@@ -499,22 +526,37 @@ if (($this->year=='')&&($this->album_obj->name!='')
 
 // In an artist bundle, try to prefix file name with artist name if set in previous tags
 
-if ($this->artist_obj->is_multi())
+if ($this->album_obj->artist->is_multi())
 	{
 	$orig_artist=$this->artist;
-	if (($this->artist=='')||($this->artist_obj->is_multi()))
+	if (($orig_artist=='')||(artist_string_is_multi($orig_artist)))
 		$orig_artist=$this->get_mcomment('ORIG_ARTIST');
-	if (($orig_artist=='')||($orig_artist{0}=='-')
+	if (($orig_artist=='')||(artist_string_is_multi($orig_artist))
 		||(starts_with($orig_artist,'Divers '))
 		||(starts_with($orig_artist,'Various '))
 			) $orig_artist=null;
 	if (!is_null($orig_artist))
 		{
 		$orig_artist=normalize_string($orig_artist);
-		$ostring=$orig_artist.' - ';
-		$ostring2=' - '.$orig_artist;
-		if (!ends_with($fbase,$ostring2)) $fbase=add_prefix($fbase,$ostring);
-		$this->set_title(add_prefix($this->title,$ostring));
+		if ((strlen($orig_artist)>4)&&(strcasecmp(substr($orig_artist,0,4),'the ')==0))
+			{
+			$a2=$orig_artist;
+			$orig_artist=substr($orig_artist,4);
+			}
+		else
+			{
+			$a2='the '.$orig_artist;
+			}
+		suppress_prefix_suffix($fbase,$orig_artist);
+		suppress_prefix_suffix($fbase,$a2);
+		$p1=$orig_artist.' - ';
+		$fbase=add_prefix($fbase,$p1);
+		$p2=$a2.' - ';
+		$tmp_title=$this->title;
+		suppress_prefix_suffix($tmp_title,$a2);
+		if ($tmp_title!=$this->title) $this->set_title($tmp_title);
+		$this->set_title(add_prefix($this->title,$p1));
+			
 		}
 	}
 
@@ -540,7 +582,7 @@ if ($nname !== $this->fname) $this->rename($nname);
 
 //-- Artist
 
-$artist_name=$this->artist_obj->name;
+$artist_name=$this->album_obj->artist->name;
 if ((!$this->isset_mcomment('ORIG_ARTIST'))&&($this->artist!='')
 	&&($this->artist!=$artist_name))
 	{
@@ -610,7 +652,7 @@ if ($ftrack)
 elseif (($this->track==0)||($this->isset_mcomment('AUTOTRACK')))
 	{
 	$this->set_mcomment('AUTOTRACK','dir_order');
-	$this->set_track($this->dir_order);
+	$this->set_track($this->album_obj->dir_order($this));
 	}
 
 //-- Save changes
@@ -622,6 +664,45 @@ return $this->save();
 
 public function check()
 {
+//-- Check if bitrate more than reference
+
+if (($GLOBALS['max_bitrate']!=0)&&($this->bitrate>$GLOBALS['max_bitrate']))
+	{
+	PHO_Display::info($this->relpath().': Excessive bitrate ('.$this->bitrate.')');
+	if (!is_null($GLOBALS['output_file']))
+		{
+		file_put_contents($GLOBALS['output_file'],$this->path()."\n",FILE_APPEND);
+		}
+	}
+}
+
+//------
+// Compute size that could be spared if quality set to max_bitrate
+
+public function to_spare()
+{
+if (($GLOBALS['max_bitrate'])&&($this->bitrate>$GLOBALS['max_bitrate']))
+	{
+	$res=intval((($this->bitrate-$GLOBALS['max_bitrate'])*$this->audio_size)/$this->bitrate);
+	PHO_Display::debug($this->relpath().': can be reduced by '.$res.' bytes');
+	}
+else $res=0;
+
+return $res;
+}
+
+//------
+
+public static function sort_callbak($song1,$song2)
+{
+return strcasecmp($song1->album_rel_path(),$song2->album_rel_path());
+}
+
+//------
+
+public function album_rel_path()
+{
+return PHO_File::combine_path($this->dir,$this->fname);
 }
 
 //------

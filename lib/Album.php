@@ -9,9 +9,11 @@ $GLOBALS['ignored_extensions']=array(
 	'mpg' => 1,
 	'doc' => 1,
 	'cue' => 1,
-	'pdf' => 1);
+	'pdf' => 1,
+	'nfo' => 1);
 
 $GLOBALS['cover_patterns']=array(
+	'folder',
 	'front$',
 	'recto$',
 	'front',
@@ -28,7 +30,6 @@ class Album
 public $dir;	// Relative path from artist dir
 public $name;	// Album name (UTF)
 public $songs;	// Array of Song objects
-public $nb_tracks; // Track count
 public $default_year='';
 
 public $cover_data=null;	// null if no cover
@@ -45,17 +46,17 @@ PHO_Display::debug("Creating album: ".$dir);
 $this->artist=$artist;
 $this->dir=$dir;
 $this->name=fname_to_utf($this->dir);
+$this->songs=array();
 
 //---- Populate
 
-$songs=array();
 $images=array();
 
-$this->_get_dir_elements('',(!$this->is_root()),$songs,$images);
+$this->_get_dir_elements('',(!$this->is_root()),$images);
 
 // No album if it contains no song
 
-if (($this->nb_tracks=count($songs))===0) throw new Exception('No song');
+if (count($this->songs)===0) throw new Exception('No song');
 
 //-- Find best cover image
 
@@ -87,38 +88,17 @@ switch (count($images))
 	}
 if (!is_null($cover_file)) $this->get_cover_from_file($this->path($cover_file));
 
-//-- Build song objects
-
-$this->songs=array();
-
-$dir_order=1;
-foreach($songs as $a)
-	{
-	list($dir,$fname)=$a;
-	try
-		{
-		$this->songs[]=new Song($this,$dir,$fname,$dir_order);
-		$dir_order++;
-		}
-	catch (Exception $e)
-		{
-		$msg=$e->getMessage();
-		if ($msg!='') PHO_Display::warning($this->relpath().': Ignoring song <'
-			.$fname.'> - Reason: '.$msg);
-		}
-	}
-
 //-- If we don't have a cover image, try to get one from a song
 
 if (!$this->has_cover())
 	{
-	//DBG/PHO_Display::trace($this->relpath().': Searching for cover in songs');
+	PHO_Display::debug($this->relpath().': Searching for cover in songs');
 	foreach($this->songs as $song)
 		{
 		if ($song->has_cover())
 			// Warning: Song cover is not normalized at this time
 			{
-			//DBG/PHO_Display::trace($song->fname.': song has cover');
+			PHO_Display::debug($song->fname.': song has cover');
 			try
 				{
 				$img=Image::mk_image($song->cover_data);
@@ -143,22 +123,11 @@ if (!$this->has_cover())
 			}
 		}
 	}
-
-//-- Try to determine default year from songs
-
-foreach ($this->songs as $song)
-	{
-	if ($song->year!='')
-		{
-		$this->default_year=$song->year;
-		break;
-		}
-	}
 }
 
 //----
 
-private function _get_dir_elements($rdir,$recurse,&$songs,&$images)
+private function _get_dir_elements($rdir,$recurse,&$images)
 {
 $absdir=$this->path($rdir);
 $files=PHO_File::scandir($absdir);
@@ -170,19 +139,30 @@ usort($files,'strcasecmp');
 
 //natcasesort($files);
 
-foreach ($files as $entry)
+foreach ($files as $fname)
 	{
-	$abspath=PHO_File::combine_path($absdir,$entry);
-	$rpath=PHO_File::combine_path($rdir,$entry);
-	$ext=PHO_File::file_suffix($entry);
+	$abspath=PHO_File::combine_path($absdir,$fname);
+	$rpath=PHO_File::combine_path($rdir,$fname);
+	$ext=PHO_File::file_suffix($fname);
 	if (is_dir($abspath))
 		{
-		if ($recurse) $this->_get_dir_elements($rpath,true,$songs,$images);
+		if ($recurse) $this->_get_dir_elements($rpath,true,$images);
 		continue;
 		}
 	if (Song::is_a_song($abspath))
 		{
-		$songs[]=array($rdir,$entry);
+		try
+			{
+			$this->songs[]=$song=new Song($this,$rdir,$fname);
+			if (($this->default_year==='')&&($song->year!=''))
+				$this->default_year=$song->year;
+			}
+		catch (Exception $e)
+			{
+			$msg=$e->getMessage();
+			if ($msg!='') PHO_Display::warning($this->relpath().': Ignoring song <'
+				.$fname.'> - Reason: '.$msg);
+			}
 		}
 	elseif (Image::is_image_suffix($ext))
 		{
@@ -190,11 +170,18 @@ foreach ($files as $entry)
 		}
 	else
 		{
-		if ((!array_key_exists(strtolower($entry),$GLOBALS['ignored_files']))
+		if ((!array_key_exists(strtolower($fname),$GLOBALS['ignored_files']))
 			&& (!array_key_exists($ext,$GLOBALS['ignored_extensions'])))
-			Pho_Display::warning("Found unknown file type: $entry");
+			Pho_Display::warning("Found unknown file type: $fname");
 		}
 	}
+}
+
+//------
+
+public function track_count()
+{
+return count($this->songs);
 }
 
 //------
@@ -249,13 +236,20 @@ suppress_prefix($nname,'the '.$this->artist->name);
 $def_year=null;
 $new_nname='';
 $a=array();
-if (preg_match('/^\(?(\d\d\d\d)\)?\s*[\-\._]\s*(\S.*)$/u',$nname,$a))
+foreach(array(
+	'/^\(?(\d\d\d\d)\)?\s*[\-\._]\s*(\S.*)$/u',	// Ex: '(1989) title' ou '1989 - title'
+	'/^\[([12]\d\d\d)\]\s*[\-\._]?\s*(\S.*)$/u'	// Ex: [1989] Wish you were here
+	) as $re)
 	{
-	$def_year=$a[1];
-	$new_nname=$a[2];
+	if (preg_match($re,$nname,$a))
+		{
+		$def_year=$a[1];
+		$new_nname=$a[2];
+		break;
+		}
 	}
 
-if (preg_match('/^(.*\S)\s*\((\d\d\d\d)\)$/u',$nname,$a))
+if (is_null($def_year) && preg_match('/^(.*\S)\s*\((\d\d\d\d)\)$/u',$nname,$a))
 	{
 	$def_year=$a[2];
 	$new_nname=$a[1];
@@ -281,7 +275,27 @@ if ($nname !== $this->name) $this->rename($nname);
 
 // Fix songs
 
-foreach($this->songs as $song) $song->fix();
+$arc=false;
+
+while (1)
+	{
+	$rc=false;
+	foreach($this->songs as $song)
+		{
+		if ($song->fix()) $arc=$rc=true;
+		}
+	if (!$rc) break;
+	//-- Sort songs for valid autotracks
+	usort($this->songs,array('Song','sort_callbak'));
+	}
+}
+
+//------
+
+public function dir_order($song)
+{
+$res=array_search($song,$this->songs,true);
+return ($res===false) ? false : $res+1;
 }
 
 //------
@@ -306,6 +320,15 @@ if ($GLOBALS['do_changes'])
 	}
 $this->name=$name;
 $this->dir=$newdir;
+}
+
+//------
+
+public function to_spare()
+{
+$res=0;
+foreach($this->songs as $song) $res +=$song->to_spare();
+return $res;
 }
 
 //------
