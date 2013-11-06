@@ -224,7 +224,7 @@ function get_options()
 {
 $args=PHO_Getopt::readPHPArgv();
 array_shift($args);
-list($options,$args)=PHO_Getopt::getopt($args,'nvr:f:c'
+list($options,$args2)=PHO_Getopt::getopt2($args,'nvr:f:c'
 	,array('verbose','noexec','max_bitrate','output_file','check_only'));
 
 foreach($options as $option)
@@ -259,7 +259,7 @@ foreach($options as $option)
 
 		}
 	}
-$GLOBALS['argv']=$args;
+$GLOBALS['argv']=$args2;
 }
 
 //-----------------------
