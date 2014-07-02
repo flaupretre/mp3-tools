@@ -21,6 +21,8 @@ $GLOBALS['output_file']=null;
 
 $GLOBALS['check_only']=false;
 
+$GLOBALS['inverse']=false;
+
 //--------------
 
 date_default_timezone_set('Europe/Paris'); // Mandatory on Windows

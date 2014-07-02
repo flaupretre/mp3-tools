@@ -224,8 +224,8 @@ function get_options()
 {
 $args=PHO_Getopt::readPHPArgv();
 array_shift($args);
-list($options,$args2)=PHO_Getopt::getopt2($args,'nvr:f:c'
-	,array('verbose','noexec','max_bitrate','output_file','check_only'));
+list($options,$args2)=PHO_Getopt::getopt2($args,'nvr:f:ci'
+	,array('verbose','noexec','max_bitrate','output_file','check_only','inverse'));
 
 foreach($options as $option)
 	{
@@ -255,6 +255,11 @@ foreach($options as $option)
 		case 'c':
 		case '--check_only':
 			$GLOBALS['check_only']=true;
+			break;
+
+		case 'i':
+		case '--inverse':
+			$GLOBALS['inverse']=true;
 			break;
 
 		}

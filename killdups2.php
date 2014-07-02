@@ -22,21 +22,34 @@ foreach($c_arbo->get_files() as $cfile)
 	$bname=strtolower(basename($cfile->path()));
 	if (($bname==='desktop.ini')||($bname==='thumbs.db'))
 		{
-		$c_arbo->delete($cfile);
+		if (!$GLOBALS['inverse']) $c_arbo->delete($cfile);
 		continue;
 		}
 	$tfile=$r_arbo->find($cfile);
-	if ($tfile !== false)
+	if ($tfile === false)
 		{
-		PHO_Display::trace("* Match: \n	".$cfile->path()."\n	".$tfile->path());
-		$c_arbo->delete($cfile);
+		if ($GLOBALS['inverse'])
+			{
+			PHO_Display::msg("Not found: ".$cfile->path());
+			}
+		}
+	else
+		{
+		if (!$GLOBALS['inverse'])
+			{
+			PHO_Display::msg("* Match: \n	".$cfile->path()."\n	".$tfile->path());
+			$c_arbo->delete($cfile);
+			}
 		}
 	}
 
 // Remove empty dirs
-PHO_Display::trace('Removing empty directories');
 
-$c_arbo->remove_empty_dirs();
+if (!$GLOBALS['inverse'])
+	{
+	PHO_Display::trace('Removing empty directories');
+	$c_arbo->remove_empty_dirs();
+	}
 
 //$c_arbo->display();
 
