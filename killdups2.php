@@ -9,11 +9,11 @@ get_options();
 $ref_path=array_shift($argv);
 $check_path=array_shift($argv);
 
-PHO_Display::trace('Reading ref tree');
+Phool\Display::trace('Reading ref tree');
 
 $r_arbo=new CRC_Arbo($ref_path);
 
-PHO_Display::trace('Reading check tree');
+Phool\Display::trace('Reading check tree');
 
 $c_arbo=new CRC_Arbo($check_path);
 
@@ -28,13 +28,13 @@ foreach($c_arbo->get_files() as $cfile)
 	$tfile=$r_arbo->find($cfile);
 	if ($tfile !== false)
 		{
-		PHO_Display::trace("* Match: \n	".$cfile->path()."\n	".$tfile->path());
+		Phool\Display::trace("* Match: \n	".$cfile->path()."\n	".$tfile->path());
 		$c_arbo->delete($cfile);
 		}
 	}
 
 // Remove empty dirs
-PHO_Display::trace('Removing empty directories');
+Phool\Display::trace('Removing empty directories');
 
 $c_arbo->remove_empty_dirs();
 

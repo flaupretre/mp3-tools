@@ -2,8 +2,17 @@
 
 //if (!extension_loaded('ktaglib')) dl('ktaglib.so');
 
-require(dirname(__FILE__).'/external/getid3.phk');
-require(dirname(__FILE__).'/external/phool.phk');
+require(dirname(__FILE__).'/../../getID3/getid3/getid3.php');
+require(dirname(__FILE__).'/../../getID3/getid3/write.php');
+
+
+require(dirname(__FILE__).'/../../phool/src/Phool/Display.php');
+require(dirname(__FILE__).'/../../phool/src/Phool/File.php');
+require(dirname(__FILE__).'/../../phool/src/Phool/Modifiable.php');
+require(dirname(__FILE__).'/../../phool/src/Phool/Util.php');
+require(dirname(__FILE__).'/../../phool/src/Phool/Options/Base.php');
+require(dirname(__FILE__).'/../../phool/src/Phool/Options/Dummy.php');
+require(dirname(__FILE__).'/../../phool/src/Phool/Options/Getopt.php');
 
 //---------------
 

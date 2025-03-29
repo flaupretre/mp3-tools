@@ -30,13 +30,13 @@ return $this->files;
 
 private function get_dir($path)
 {
-PHO_Display::trace('Getting dir '.$path);
+Phool\Display::trace('Getting dir '.$path);
 
-$entries=PHO_File::scandir($path);
+$entries=Phool\File::scandir($path);
 sort($entries);
 foreach($entries as $entry)
 	{
-	$epath=PHO_File::combine_path($path,$entry);
+	$epath=Phool\File::combinePath($path,$entry);
 	switch(filetype($epath))
 		{
 		case 'dir':
@@ -66,14 +66,14 @@ $this->remove_empty_dirs_rec($this->base_path);
 public function remove_empty_dirs_rec($path)
 {
 $status=true;
-foreach(PHO_File::scandir($path) as $entry)
+foreach(Phool\File::scandir($path) as $entry)
 	{
-	$epath=PHO_File::combine_path($path,$entry);
+	$epath=Phool\File::combinePath($path,$entry);
 	if ((filetype($epath)!=='dir')||(!$this->remove_empty_dirs_rec($epath))) $status=false;
 	}
 if ($status)
 	{
-	PHO_Display::trace('Removing empty dir: '.$path);
+	Phool\Display::trace('Removing empty dir: '.$path);
 	if ($GLOBALS['do_changes']) rmdir($path);
 	}
 return $status;
@@ -99,13 +99,13 @@ public function find_dups()
 {
 $dups=array();
 
-PHO_Display::trace('Starting analyzis: File count = '
+Phool\Display::trace('Starting analyzis: File count = '
 	.count($this->files).' - Hash table size = '.count($this->hash_table));
 foreach ($this->hash_table as $hash => $files)
 	{
 	if (count($files) < 2) continue;
 	$d=array();
-	PHO_Display::debug('Analyzing; Size='.$hash.' ; nb='.count($files));
+	Phool\Display::debug('Analyzing; Size='.$hash.' ; nb='.count($files));
 	foreach($files as $file)
 		{
 		$crc=$file->crc();

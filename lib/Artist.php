@@ -18,7 +18,7 @@ $this->path=$path;
 $this->dir=basename($path);
 $this->name=fname_to_utf($this->dir);
 
-PHO_Display::trace("Creating artist: ".$this->name);
+Phool\Display::trace("Creating artist: ".$this->name);
 
 //---- Populate
 
@@ -35,13 +35,13 @@ private function get_album($dir)
 $album=null;
 try
 	{
-	PHO_Display::debug("Artist: ".$this->name.' - Album dir: '.$dir);
+	Phool\Display::debug("Artist: '".$this->name."' - Album dir: '".$dir."'");
 	$album=$this->albums[]=new Album($this,$dir);
 	}
 catch (Exception $e)
 	{
 	$msg=$e->getMessage();
-	if (($msg!='')&&($dir!='')) PHO_Display::warning($this->name.': Ignoring album <'.$dir
+	if (($msg!='')&&($dir!='')) Phool\Display::warning($this->name.': Ignoring album <'.$dir
 		.'> - Reason: '.$msg);
 	}
 return $album;
@@ -58,7 +58,7 @@ return artist_string_is_multi($this->name);
 
 public function fix()
 {
-PHO_Display::debug("Fixing artist: ".$this->name);
+Phool\Display::debug("Fixing artist: ".$this->name);
 
 // Fix albums
 
@@ -87,14 +87,14 @@ return $res;
 
 public function path($fname='')
 {
-return PHO_File::combine_path($this->path,$fname);
+return Phool\File::combinePath($this->path,$fname);
 }
 
 //------
 
 public function relpath($fname='')
 {
-return PHO_File::combine_path($this->dir,$fname);
+return Phool\File::combinePath($this->dir,$fname);
 }
 
 //------

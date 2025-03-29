@@ -28,7 +28,7 @@ return $this->artists;
 
 public function artist($name)
 {
-return new Artist(PHO_File::combine_path($this->path(),$name),$name);
+return new Artist(Phool\File::combinePath($this->path(),$name),$name);
 }
 
 //------

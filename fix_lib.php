@@ -21,6 +21,6 @@ foreach ($lib->artists() as $artist_name)
 	}
 
 if ($GLOBALS['max_bitrate'])
-	PHO_Display::info('Size to spare: '.intval($to_spare/1048576).' Mo');
+	Phool\Display::info('Size to spare: '.intval($to_spare/1048576).' Mo');
 
 ?>

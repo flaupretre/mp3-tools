@@ -17,9 +17,9 @@ function get_subdirs($path)
 {
 $a=array();
 
-foreach(PHO_File::scandir($path) as $entry)
+foreach(Phool\File::scandir($path) as $entry)
 	{
-	if (is_dir(PHO_FILE::combine_path($path,$entry))) $a[]=basename($entry);
+	if (is_dir(Phool\File::combinePath($path,$entry))) $a[]=basename($entry);
 	}
 natcasesort($a);
 return $a;
@@ -102,7 +102,7 @@ $plen=strlen($prefix);
 if (strcasecmp(substr($string,0,$plen),$prefix)==0)
 	{
 	$str2=trim(substr($string,$plen),BLANKS);
-	if (($str2!=='') && (strpos(SEPAR,$str2{0})!==false))
+	if (($str2!=='') && (strpos(SEPAR,$str2[0])!==false))
 		{
 		$str2=trim($str2,BSEPAR);
 		if ($str2!=='')
@@ -165,7 +165,7 @@ return false;
 function artist_string_is_multi($string)
 {
 if ($string=='') return false;
-return ($string{0}==='-');
+return ($string[0]==='-');
 }
 
 //-----------------------
@@ -192,13 +192,13 @@ function fname_to_utf($fname)
 {
 if (!strlen($fname)) return '';
 
-//PHO_Display::trace("fname_to_utf: input: $fname - ".bin2hex($fname));
+//Phool\Display::trace("fname_to_utf: input: $fname - ".bin2hex($fname));
 
 if ($GLOBALS['fname_encoding']=='UTF-8') return $fname;
 //return iconv($GLOBALS['fname_encoding'],'UTF-8',$fname);
 $res=mb_convert_encoding($fname,'UTF-8',$GLOBALS['fname_encoding']);
 
-//PHO_Display::trace("fname_to_utf: output: $res - ".bin2hex($res));
+//Phool\Display::trace("fname_to_utf: output: $res - ".bin2hex($res));
 return $res;
 }
 
@@ -208,13 +208,13 @@ function utf_to_fname($string)
 {
 if (!strlen($string)) return '';
 
-//PHO_Display::trace("utf_to_fname: input: $string - ".bin2hex($string));
+//Phool\Display::trace("utf_to_fname: input: $string - ".bin2hex($string));
 
 if ($GLOBALS['fname_encoding']=='UTF-8') return $string;
 //return iconv('UTF-8',$GLOBALS['fname_encoding'],$string);
 $res=mb_convert_encoding($string,$GLOBALS['fname_encoding'],'UTF-8');
 
-//PHO_Display::trace("utf_to_fname: output: $res - ".bin2hex($string));
+//Phool\Display::trace("utf_to_fname: output: $res - ".bin2hex($string));
 return $res;
 }
 
@@ -222,9 +222,9 @@ return $res;
 
 function get_options()
 {
-$args=PHO_Getopt::readPHPArgv();
+$args=Phool\Options\Getopt::readPHPArgv();
 array_shift($args);
-list($options,$args2)=PHO_Getopt::getopt2($args,'nvr:f:c'
+list($options,$args2)=Phool\Options\Getopt::getopt2($args,'nvr:f:c'
 	,array('verbose','noexec','max_bitrate','output_file','check_only'));
 
 foreach($options as $option)
@@ -234,7 +234,7 @@ foreach($options as $option)
 		{
 		case 'v':
 		case '--verbose':
-			PHO_Display::inc_verbose();
+			Phool\Display::incVerbose();
 			break;
 
 		case 'n':

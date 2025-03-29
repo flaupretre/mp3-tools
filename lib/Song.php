@@ -26,12 +26,13 @@ $GLOBALS['tag_translation']=array(
 	'url_payment' => 'payment',
 	'album_sort_order' => null, // Unknown field in write code
 	'band' => null,	// Creates a different album entry on Ipod
-//	'publisher' => null	// Creates a different album entry on Ipod
+//	'publisher' => null,	// Creates a different album entry on Ipod
+  'totaltracks' => null,
 	);
 
 //-------------
 
-class Song extends PHO_Modifiable
+class Song extends Phool\Modifiable
 {
 public $dir;	// Relative dir from album path
 public $fname;
@@ -66,7 +67,7 @@ private static $id3=null;
 
 public function __construct($album_obj,$dir,$fname)
 {
-PHO_Display::debug("Creating song: ".$fname);
+Phool\Display::debug("Creating song: ".$fname);
 
 $this->album_obj=$album_obj;
 $this->dir=$dir;
@@ -115,7 +116,7 @@ foreach(explode("\r\n",$this->comment) as $comment)
 		if (($pos=strpos($comment,':'))!==false)
 			{
 			$mname=substr($comment,0,$pos);
-			$mvalue=PHO_Util::substr($comment,$pos+1);
+			$mvalue=Phool\Util::substr($comment,$pos+1);
 			}
 		else
 			{
@@ -133,7 +134,7 @@ $this->comment=implode("\r\n",$comments);
 
 //-- Fix album name between internal and external value
 
-if ($this->album==='') $this->set_modified(); // Force change by fix()
+if ($this->album==='') $this->setModified(); // Force change by fix()
 if ($this->album===NO_ALBUM) $this->album='';
 
 //-- Track number could be set as 'track_number' in V2 tags only
@@ -142,7 +143,7 @@ if (($this->track==0)&&(isset($info['tags']['id3v2']['track_number'][0])))
 	{
 	$this->track=$info['tags']['id3v2']['track_number'][0];
 	 // To set ID3V1 track number (id3v1 does not support track number greater than 255)
-	 if ($this->track < 256) $this->set_modified();
+	 if ($this->track < 256) $this->setModified();
 	}
 
 // Fix track (remove optional '/<total>' suffix)
@@ -169,12 +170,12 @@ if (isset($info['comments']['picture']))
 			$this->trace('Converting invalid image type to jpeg');
 			$img=Image::mk_image($this->cover_data);
 			Image::image_to_jpeg($img,$this->cover_data,$this->cover_mime);
-			$this->set_modified();
+			$this->setModified();
 			}
 		}
 	else // Invalid picture - must be cleared
 		{
-		$this->set_modified();
+		$this->setModified();
 		}
 	}
 }
@@ -190,7 +191,7 @@ return (!is_null($this->cover_data));
 
 public static function is_a_song($path)
 {
-return (strtolower(PHO_File::file_suffix($path))==='mp3');
+return (strtolower(Phool\File::fileSuffix($path))==='mp3');
 }
 
 //------
@@ -209,7 +210,10 @@ if (is_null(self::$id3))
 public static function analyze($path)
 {
 self::init_id3();
-return self::$id3->analyze($path);
+$data = self::$id3->analyze($path);
+unset($data['tags']['id3v2']['totaltracks']);
+//var_dump($data);
+return $data;
 }
 
 //------
@@ -278,7 +282,7 @@ $this->debug('Writing tags');
 
 //-- Create writer obj
 
-$writer=new getid3_writetags;
+$writer=new \getid3_writetags;
 $writer->overwrite_tags=true;
 $writer->tag_encoding='UTF-8';
 $writer->tagformats = array('id3v1', 'id3v2.3'); 
@@ -296,6 +300,7 @@ foreach($GLOBALS['props'] as $prop => $def)
 
 //-- Set track nb to v2 format
 
+$data['track'][0] = min ($data['track'][0], $this->album_obj->track_count());
 $data['track'][0].='/'.$this->album_obj->track_count();
 
 //-- Integrate mcomments into the comment tag
@@ -346,6 +351,7 @@ if (!is_null($this->cover_data))
 
 //-- Write new tags
 
+// var_dump($data['track'][0]);
 $writer->tag_data=$data;
 if ($GLOBALS['do_changes'])
 	{
@@ -356,16 +362,16 @@ if ($GLOBALS['do_changes'])
 	touch($writer->filename,$mtime+3);
 	if (!empty($writer->errors))
 		{
-		PHO_Display::error($this->relpath().': Errors writing tags: '
+		Phool\Display::error($this->relpath().': Errors writing tags: '
 			.implode("\n",array_unique($writer->errors)));
 		}
 	if (!empty($writer->warnings))
 		{
-		PHO_Display::warning($this->relpath().': Warnings writing tags: '
+		Phool\Display::warning($this->relpath().': Warnings writing tags: '
 			.implode("\n",array_unique($writer->warnings)));
 		}
 	}
-$this->clear_modified();
+$this->clearModified();
 unset($writer);
 }
 
@@ -376,21 +382,21 @@ private function set_property($prop,$value)
 if ($value == $this->$prop) return;
 $this->trace('Setting '.$prop.': <'.$this->$prop.'> to <'.$value.'>');
 $this->$prop=$value;
-$this->set_modified();
+$this->setModified();
 }
 
 //------
 
 public function trace($msg)
 {
-PHO_Display::trace($this->relpath().': '.$msg);
+Phool\Display::trace($this->relpath().': '.$msg);
 }
 
 //------
 
 public function debug($msg)
 {
-PHO_Display::debug($this->relpath().': '.$msg);
+Phool\Display::debug($this->relpath().': '.$msg);
 }
 
 //------
@@ -424,7 +430,7 @@ if ((!array_key_exists($mname,$this->mcomments))||($this->mcomments[$mname]!==$m
 	{
 	$this->trace('Setting mcomment: '.$mname);
 	$this->mcomments[$mname]=$mvalue;
-	$this->set_modified();
+	$this->setModified();
 	}
 }
 
@@ -436,7 +442,7 @@ if (array_key_exists($mname,$this->mcomments))
 	{
 	$this->trace('Clearing mcomment: '.$mname);
 	unset($this->mcomments[$mname]);
-	$this->set_modified();
+	$this->setModified();
 	}
 }
 
@@ -480,7 +486,7 @@ foreach($GLOBALS['tag_translation'] as $tag => $target)
 		{
 		$this->trace("Found tag to remove : $tag");
 		clear_key($this->other_tags,$tag); // not mandatory, but cleaner
-		$this->set_modified();
+		$this->setModified();
 		}
 	}
 
@@ -488,7 +494,7 @@ foreach($GLOBALS['tag_translation'] as $tag => $target)
 
 $ufname=fname_to_utf($this->fname);
 $dotpos=strrpos($ufname,'.');
-$ext=PHO_File::file_suffix($ufname);
+$ext=Phool\File::fileSuffix($ufname);
 $fbase=substr($ufname,0,$dotpos);
 
 $fbase=fix_spaces($fbase);
@@ -612,7 +618,7 @@ if (($this->album_obj->has_cover())
 	$this->trace('Setting album cover');
 	$this->cover_data=$this->album_obj->cover_data;
 	$this->cover_mime=$this->album_obj->cover_mime;
-	$this->set_modified();
+	$this->setModified();
 	}
 else if ((!$this->album_obj->has_cover())&&(!is_null($this->cover_data)))
 	{
@@ -623,7 +629,7 @@ else if ((!$this->album_obj->has_cover())&&(!is_null($this->cover_data)))
 			{
 			$this->debug('Normalizing cover image');
 			Image::image_to_jpeg($img,$this->cover_data,$this->cover_mime);
-			$this->set_modified();
+			$this->setModified();
 			}
 		unset($img);
 		}
@@ -668,7 +674,7 @@ public function check()
 
 if (($GLOBALS['max_bitrate']!=0)&&($this->bitrate>$GLOBALS['max_bitrate']))
 	{
-	PHO_Display::info($this->relpath().': Excessive bitrate ('.$this->bitrate.')');
+	Phool\Display::info($this->relpath().': Excessive bitrate ('.$this->bitrate.')');
 	if (!is_null($GLOBALS['output_file']))
 		{
 		file_put_contents($GLOBALS['output_file'],$this->path()."\n",FILE_APPEND);
@@ -684,7 +690,7 @@ public function to_spare()
 if (($GLOBALS['max_bitrate'])&&($this->bitrate>$GLOBALS['max_bitrate']))
 	{
 	$res=intval((($this->bitrate-$GLOBALS['max_bitrate'])*$this->audio_size)/$this->bitrate);
-	PHO_Display::debug($this->relpath().': can be reduced by '.$res.' bytes');
+	Phool\Display::debug($this->relpath().': can be reduced by '.$res.' bytes');
 	}
 else $res=0;
 
@@ -702,14 +708,14 @@ return strcasecmp($song1->album_rel_path(),$song2->album_rel_path());
 
 public function album_rel_path()
 {
-return PHO_File::combine_path($this->dir,$this->fname);
+return Phool\File::combinePath($this->dir,$this->fname);
 }
 
 //------
 
 public function path($fname=null)
 {
-return PHO_File::combine_path($this->album_obj->path($this->dir)
+return Phool\File::combinePath($this->album_obj->path($this->dir)
 	,(is_null($fname)?$this->fname:$fname));
 }
 
@@ -717,7 +723,7 @@ return PHO_File::combine_path($this->album_obj->path($this->dir)
 
 public function relpath($fname=null)
 {
-return PHO_File::combine_path($this->album_obj->relpath($this->dir)
+return Phool\File::combinePath($this->album_obj->relpath($this->dir)
 	,(is_null($fname)?$this->fname:$fname));
 }
 

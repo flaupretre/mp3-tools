@@ -41,7 +41,7 @@ public $artist ; // backlink
 
 public function __construct($artist,$dir)
 {
-PHO_Display::debug("Creating album: ".$dir);
+Phool\Display::debug("Creating album: ".(($dir === '') ? '<Root>' : $dir));
 
 $this->artist=$artist;
 $this->dir=$dir;
@@ -92,19 +92,19 @@ if (!is_null($cover_file)) $this->get_cover_from_file($this->path($cover_file));
 
 if (!$this->has_cover())
 	{
-	PHO_Display::debug($this->relpath().': Searching for cover in songs');
+	Phool\Display::debug($this->relpath().': Searching for cover in songs');
 	foreach($this->songs as $song)
 		{
 		if ($song->has_cover())
 			// Warning: Song cover is not normalized at this time
 			{
-			PHO_Display::debug($song->fname.': song has cover');
+			Phool\Display::debug($song->fname.': song has cover');
 			try
 				{
 				$img=Image::mk_image($song->cover_data);
 				if (Image::normalize($img))
 					{
-					PHO_Display::debug($this->relpath().': Normalizing album cover image');
+					Phool\Display::debug($this->relpath().': Normalizing album cover image');
 					Image::image_to_jpeg($img,$this->cover_data,$this->cover_mime);
 					}
 				else
@@ -116,7 +116,7 @@ if (!$this->has_cover())
 				}
 			catch (Exception $e)	// Exception: Ignore image and try the next one
 				{
-				PHO_Display::trace($song->relpath()
+				Phool\Display::trace($song->relpath()
 					.': Error getting album cover from song:'.$e->getMessage());
 				} 
 			if ($this->has_cover()) break;
@@ -130,7 +130,7 @@ if (!$this->has_cover())
 private function _get_dir_elements($rdir,$recurse,&$images)
 {
 $absdir=$this->path($rdir);
-$files=PHO_File::scandir($absdir);
+$files=Phool\File::scandir($absdir);
 
 usort($files,'strcasecmp');
 
@@ -141,9 +141,9 @@ usort($files,'strcasecmp');
 
 foreach ($files as $fname)
 	{
-	$abspath=PHO_File::combine_path($absdir,$fname);
-	$rpath=PHO_File::combine_path($rdir,$fname);
-	$ext=PHO_File::file_suffix($fname);
+	$abspath=Phool\File::combinePath($absdir,$fname);
+	$rpath=Phool\File::combinePath($rdir,$fname);
+	$ext=Phool\File::fileSuffix($fname);
 	if (is_dir($abspath))
 		{
 		if ($recurse) $this->_get_dir_elements($rpath,true,$images);
@@ -160,7 +160,7 @@ foreach ($files as $fname)
 		catch (Exception $e)
 			{
 			$msg=$e->getMessage();
-			if ($msg!='') PHO_Display::warning($this->relpath().': Ignoring song <'
+			if ($msg!='') Phool\Display::warning($this->relpath().': Ignoring song <'
 				.$fname.'> - Reason: '.$msg);
 			}
 		}
@@ -172,7 +172,7 @@ foreach ($files as $fname)
 		{
 		if ((!array_key_exists(strtolower($fname),$GLOBALS['ignored_files']))
 			&& (!array_key_exists($ext,$GLOBALS['ignored_extensions'])))
-			Pho_Display::warning("Found unknown file type: $fname");
+			Phool\Display::warning("Found unknown file type: $fname");
 		}
 	}
 }
@@ -206,7 +206,7 @@ try {
 	$img=Image::mk_image_from_file($path);
 	if (Image::normalize($img))
 		{
-		PHO_Display::debug($path.': Normalizing album cover image');
+		Phool\Display::debug($path.': Normalizing album cover image');
 		}
 	Image::image_to_jpeg($img,$this->cover_data,$this->cover_mime);
 	unset($img);
@@ -311,7 +311,7 @@ foreach($this->songs as $song) $song->check();
 
 public function rename($name)
 {
-PHO_Display::trace('Renaming album : <'.$this->name.'> to <'.$name.'>');
+Phool\Display::trace('Renaming album : <'.$this->name.'> to <'.$name.'>');
 
 $newdir=utf_to_fname($name);
 if ($GLOBALS['do_changes'])
@@ -336,7 +336,7 @@ return $res;
 public function path($fname=null)
 {
 $path=$this->artist->path($this->dir);
-if (!is_null($fname)) $path=PHO_File::combine_path($path,$fname);
+if (!is_null($fname)) $path=Phool\File::combinePath($path,$fname);
 return $path;
 }
 
@@ -344,7 +344,7 @@ return $path;
 public function relpath($fname=null)
 {
 $path=$this->artist->relpath($this->dir);
-if (!is_null($fname)) $path=PHO_File::combine_path($path,$fname);
+if (!is_null($fname)) $path=Phool\File::combinePath($path,$fname);
 return $path;
 }
 

@@ -12,7 +12,7 @@ class Image
 
 public static function is_image_path($path)
 {
-return self::is_image_suffix(PHO_File::file_suffix($path));
+return self::is_image_suffix(Phool\File::fileSuffix($path));
 }
 
 //-----------------------
@@ -26,7 +26,7 @@ return (array_key_exists($ext,$GLOBALS['img_suffixes']));
 
 public static function mime_type($path)
 {
-return $GLOBALS['img_suffixes'][PHO_File::file_suffix($path)];
+return $GLOBALS['img_suffixes'][Phool\File::fileSuffix($path)];
 }
 
 //-----------------------
@@ -71,8 +71,8 @@ $mi=min($w,$h);
 $d=abs($w-$h);
 if (($d*5) > $mi)
 	{
-	//PHO_Display::debug('Cutting bottom/left square');
-	if ($h>$w) PHO_Display::debug('Note : Image height is larger');
+	//Phool\Display::debug('Cutting bottom/left square');
+	if ($h>$w) Phool\Display::debug('Note : Image height is larger');
 	$len=$mi;
 	$img2=imagecreatetruecolor($len,$len);
 	imagecopy($img2,$img,0,0,$w-$len,$h-$len,$len,$len);
@@ -90,7 +90,7 @@ if ($ma > IMG_MAX_SIZE)
 	$ratio=$ma/IMG_MAX_SIZE;
 	$w2=round($w/$ratio);
 	$h2=round($h/$ratio);
-	PHO_Display::debug("Resizing image: ${w}x${h} to ${w2}x${h2}");
+	Phool\Display::debug("Resizing image: ${w}x${h} to ${w2}x${h2}");
 	$img2=imagecreatetruecolor($w2,$h2);
 	imagecopyresampled($img2,$img,0,0,0,0,$w2,$h2,$w,$h);
 	$img=$img2;

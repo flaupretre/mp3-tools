@@ -66,7 +66,7 @@ return $this->crc;
 
 public function delete()
 {
-PHO_Display::trace('Deleting '.$this->path);
+Phool\Display::trace('Deleting '.$this->path);
 if ($GLOBALS['do_changes']) unlink($this->path);
 }
 
@@ -74,7 +74,7 @@ if ($GLOBALS['do_changes']) unlink($this->path);
 
 public function display()
 {
-PHO_Display::info($this->path);
+Phool\Display::info($this->path);
 }
 
 }

@@ -15,7 +15,7 @@ else return false;
 
 //----------------------------------
 
-PHO_Display::set_verbose(1);
+Phool\Display::set_verbose(1);
 
 $lib=new Library($argv[1]);
 //$lib=restore_lib(LIB_DUMP);
@@ -28,7 +28,7 @@ foreach ($lib->artists as $artist)
 		{
 		if ((!$album->is_root())&&(!$album->has_cover()))
 			{
-			PHO_Display::info($album->relpath().': No cover');
+			Phool\Display::info($album->relpath().': No cover');
 			}
 		foreach($album->songs as $song)
 			{
@@ -54,8 +54,8 @@ foreach($titles as $title => $a)
 			}
 		if ($show)
 			{
-			PHO_Display::info("====== Title: $title");
-			foreach($a as $song) PHO_Display::info(($song->album_obj->is_root() ? '*' : ' ')
+			Phool\Display::info("====== Title: $title");
+			foreach($a as $song) Phool\Display::info(($song->album_obj->is_root() ? '*' : ' ')
 				."	".$song->relpath());
 			}
 		}

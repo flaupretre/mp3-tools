@@ -8,13 +8,13 @@ get_options();
 
 $path=array_shift($argv);
 
-PHO_Display::trace('Reading tree');
+Phool\Display::trace('Reading tree');
 
 $arbo=new CRC_Arbo($path);
 
 $dups=$arbo->find_dups();
 
-PHO_Display::trace('Analyzing');
+Phool\Display::trace('Analyzing');
 
 foreach($dups as $dup)
 	{
